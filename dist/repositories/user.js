@@ -9,21 +9,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const _1 = require(".");
+const library_1 = require("@prisma/client/runtime/library");
 class UserRepository {
     constructor(prisma) {
         this.prisma = prisma;
     }
     create(user) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.prisma.users.create({
-                data: user,
-                select: {
-                    id: true,
-                    name: true,
-                    username: true,
-                    registeredAt: true,
-                },
-            });
+            try {
+                return yield this.prisma.users.create({
+                    data: user,
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                        registeredAt: true,
+                    },
+                });
+            }
+            catch (error) {
+                if (error instanceof library_1.PrismaClientKnownRequestError &&
+                    error.code === "P2002")
+                    throw new _1.UserCreationError("UNIQUE", "username");
+                throw new Error(`${error}`);
+            }
         });
     }
 }
