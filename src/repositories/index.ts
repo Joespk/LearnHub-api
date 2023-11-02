@@ -1,3 +1,4 @@
+import { Users } from "@prisma/client";
 import { ICreateUserDto } from "../dto/user";
 
 export interface IUser {
@@ -22,4 +23,6 @@ export class UserCreationError extends Error {
 
 export interface IUserRepository {
   create(user: ICreateUserDto): Promise<IUser>;
+  findByUsername(username: string): Promise<Users>;
+  findById(id: string): Promise<IUser>;
 }

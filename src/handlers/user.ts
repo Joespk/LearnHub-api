@@ -3,7 +3,11 @@ import { IUserHandler } from ".";
 import { IErrorDto } from "../dto/Error";
 import { ICreateUserDto, IUserDto } from "../dto/user";
 import { IUserRepository, UserCreationError } from "../repositories";
-import { hashPassword } from "../utils/bcrypt";
+import { hashPassword, vetifyPassword } from "../utils/bcrypt";
+import { ICredentialDto, ILoginDto } from "../dto/auth";
+import { JWT_SECRET } from "../const";
+import { sign } from "jsonwebtoken";
+import { AuthStatus } from "../middleware/jwt";
 
 export default class UserHandler implements IUserHandler {
   private repo: IUserRepository;
@@ -11,6 +15,29 @@ export default class UserHandler implements IUserHandler {
   constructor(repo: IUserRepository) {
     this.repo = repo;
   }
+
+  public selfcheck: RequestHandler<
+    {},
+    IUserDto | IErrorDto,
+    unknown,
+    unknown,
+    AuthStatus
+  > = async (req, res) => {
+    try {
+      const { registeredAt, ...others } = await this.repo.findById(
+        res.locals.user.id
+      );
+
+      return res
+        .status(200)
+        .json({ ...others, registeredAt: registeredAt.toISOString() })
+        .end();
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).send({ message: "Internal Server Error" });
+    }
+  };
 
   public registration: RequestHandler<
     {},
@@ -57,4 +84,34 @@ export default class UserHandler implements IUserHandler {
       });
     }
   };
+
+  public login: RequestHandler<{}, ICredentialDto | IErrorDto, ILoginDto> =
+    async (req, res) => {
+      const { username, password: plainPassword } = req.body;
+      try {
+        const { password, id } = await this.repo.findByUsername(username);
+
+        if (!vetifyPassword(plainPassword, password))
+          throw new Error("Invalid username or password");
+
+        const accessToken = sign({ id }, JWT_SECRET, {
+          algorithm: "HS512",
+          expiresIn: "12h",
+          issuer: "learnhub-api",
+          subject: "user-credential",
+        });
+
+        return res
+          .status(200)
+          .json({
+            accessToken,
+          })
+          .end();
+      } catch (error) {
+        return res
+          .status(401)
+          .json({ message: "Invalid username or password" })
+          .end();
+      }
+    };
 }
