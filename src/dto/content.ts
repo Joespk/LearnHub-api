@@ -17,3 +17,8 @@ export interface IContentDto
 export interface IContentsDto {
   data: IContentDto[];
 }
+
+export interface IUpdateContentDto {
+  comment: string;
+  rating: number;
+}

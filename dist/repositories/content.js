@@ -46,5 +46,16 @@ class ContentRepository {
             },
         });
     }
+    updateById(id, data) {
+        return this.prisma.content.update({
+            data,
+            where: { id },
+            include: {
+                Users: {
+                    select: const_1.DEFAULT_USER_SELECT,
+                },
+            },
+        });
+    }
 }
 exports.default = ContentRepository;

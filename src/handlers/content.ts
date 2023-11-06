@@ -5,7 +5,12 @@ import mapToDto from "../utils/content.mapper";
 import oembedVideo from "../utils/oembed";
 import { IErrorDto } from "../dto/Error";
 import { IContentHandler } from ".";
-import { IContentDto, IContentsDto, ICreateContentDto } from "../dto/content";
+import {
+  IContentDto,
+  IContentsDto,
+  ICreateContentDto,
+  IUpdateContentDto,
+} from "../dto/content";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export default class ContentHandler implements IContentHandler {
@@ -122,5 +127,34 @@ export default class ContentHandler implements IContentHandler {
 
       return res.status(500).send({ message: "Internal Server Error" }).end();
     }
+  };
+
+  updateById: RequestHandler<
+    { id: string },
+    IContentDto | IErrorDto,
+    IUpdateContentDto,
+    undefined,
+    AuthStatus
+  > = async (req, res) => {
+    const { id } = req.params;
+    const { comment, rating } = req.body;
+
+    const numericId = Number(id);
+
+    if (isNaN(numericId))
+      return res.status(400).json({ message: "id is invalid" }).end();
+
+    const {
+      Users: { id: ownerId },
+    } = await this.repo.getById(numericId);
+
+    if (ownerId !== res.locals.user.id)
+      return res
+        .status(403)
+        .json({ message: "Requested content is forbidden" })
+        .end();
+
+    const content = await this.repo.updateById(numericId, { comment, rating });
+    return res.status(200).json(mapToDto(content)).end();
   };
 }
