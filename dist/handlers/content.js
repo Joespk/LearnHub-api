@@ -86,6 +86,21 @@ class ContentHandler {
                 return res.status(500).send({ message: "Internal Server Error" }).end();
             }
         });
+        this.updateById = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            const { comment, rating } = req.body;
+            const numericId = Number(id);
+            if (isNaN(numericId))
+                return res.status(400).json({ message: "id is invalid" }).end();
+            const { Users: { id: ownerId }, } = yield this.repo.getById(numericId);
+            if (ownerId !== res.locals.user.id)
+                return res
+                    .status(403)
+                    .json({ message: "Requested content is forbidden" })
+                    .end();
+            const content = yield this.repo.updateById(numericId, { comment, rating });
+            return res.status(200).json((0, content_mapper_1.default)(content)).end();
+        });
         this.repo = repo;
     }
 }
