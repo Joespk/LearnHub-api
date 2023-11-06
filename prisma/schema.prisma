@@ -20,16 +20,16 @@ model Users {
 }
 
 model Content {
-  id          Int      @id @default(autoincrement())
-  videoTitle  String
-  videoUrl    String
-  comment     String
-  rating      Int
-  thubnailUrl String
-  creatorName String
-  creatorUrl  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-  Users       Users    @relation(fields: [ownerId], references: [id])
-  ownerId     String   @db.Uuid()
+  id           Int      @id @default(autoincrement())
+  videoTitle   String
+  videoUrl     String
+  comment      String
+  rating       Int
+  thumbnailUrl String
+  creatorName  String
+  creatorUrl   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+  Users        Users    @relation(fields: [ownerId], references: [id])
+  ownerId      String   @db.Uuid()
 }

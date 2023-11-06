@@ -7,7 +7,7 @@ export interface AuthStatus {
 }
 
 export default class JWTMiddleware {
-  construtor() {}
+  constructor() {}
 
   auth: RequestHandler<unknown, unknown, unknown, unknown, AuthStatus> = (
     req,
@@ -15,9 +15,9 @@ export default class JWTMiddleware {
     next
   ) => {
     try {
-      const token = req.header("Authorization")!.replace("Bearer ", "").trim(); //อย่าลืมเว้นวรรคตรงBearer
+      const token = req.header("Authorization")!.replace("Bearer ", "").trim();
+
       const { id } = verify(token, JWT_SECRET) as JwtPayload;
-      console.log(`Found user id in JWT token:${id}`);
 
       res.locals = {
         user: {
@@ -27,10 +27,13 @@ export default class JWTMiddleware {
 
       return next();
     } catch (error) {
+      console.error(error);
+
       if (error instanceof TypeError)
         return res.status(401).send("Authorization header is expected").end();
       if (error instanceof JsonWebTokenError)
-        return res.status(403).send("Forbidden: Token is invalid").end();
+        return res.status(403).send("Token is invalid").end();
+
       return res.status(500).send("Internal Server Error").end();
     }
   };

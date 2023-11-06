@@ -20,13 +20,13 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const repositories_1 = require("../repositories");
-const bcrypt_1 = require("../utils/bcrypt");
-const const_1 = require("../const");
+const library_1 = require("@prisma/client/runtime/library");
 const jsonwebtoken_1 = require("jsonwebtoken");
+const const_1 = require("../const");
+const bcrypt_1 = require("../utils/bcrypt");
 class UserHandler {
     constructor(repo) {
-        this.selfcheck = (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.getPersonalInfo = (req, res) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const _a = yield this.repo.findById(res.locals.user.id), { registeredAt } = _a, others = __rest(_a, ["registeredAt"]);
                 return res
@@ -36,42 +36,12 @@ class UserHandler {
             }
             catch (error) {
                 console.error(error);
-                return res.status(500).send({ message: "Internal Server Error" });
-            }
-        });
-        this.registration = (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const { name, username, password: plainPassword } = req.body;
-            if (typeof name !== "string" || name.length === 0)
-                return res.status(400).json({ message: "name can't be empty" });
-            if (typeof username !== "string" || username.length === 0)
-                return res.status(400).json({ message: "username can't be empty" });
-            if (typeof plainPassword !== "string" || plainPassword.length < 4)
-                return res.status(400).json({ message: "password is too short" });
-            try {
-                const { id: createdId, name: createdName, registeredAt, username: createUsername, } = yield this.repo.create({
-                    name,
-                    username,
-                    password: (0, bcrypt_1.hashPassword)(plainPassword),
-                });
                 return res
-                    .status(201)
-                    .json({
-                    id: createdId,
-                    name: createdName,
-                    registeredAt: `${registeredAt}`,
-                    username: createUsername,
+                    .status(500)
+                    .send({
+                    message: "Internal Server Error",
                 })
                     .end();
-            }
-            catch (error) {
-                if (error instanceof repositories_1.UserCreationError) {
-                    return res.status(500).json({
-                        message: `${error.column} is invalid`,
-                    });
-                }
-                return res.status(500).json({
-                    message: `Internal Server Error`,
-                });
             }
         });
         this.login = (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -98,6 +68,62 @@ class UserHandler {
                     .status(401)
                     .json({ message: "Invalid username or password" })
                     .end();
+            }
+        });
+        this.registration = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { name, username, password: plainPassword } = req.body;
+            if (typeof name !== "string" || name.length === 0)
+                return res.status(400).json({ message: "name is invalid" }).end();
+            if (typeof username !== "string" || username.length === 0)
+                return res.status(400).json({ message: "username is invalid" }).end();
+            if (typeof plainPassword !== "string" || plainPassword.length < 5)
+                return res.status(400).json({ message: "password is invalid" }).end();
+            try {
+                const { id: registeredId, name: registeredName, registeredAt, username: registeredUsername, } = yield this.repo.create({
+                    name,
+                    username,
+                    password: (0, bcrypt_1.hashPassword)(plainPassword),
+                });
+                return res
+                    .status(201)
+                    .json({
+                    id: registeredId,
+                    name: registeredName,
+                    registeredAt: `${registeredAt}`,
+                    username: registeredUsername,
+                })
+                    .end();
+            }
+            catch (error) {
+                if (error instanceof library_1.PrismaClientKnownRequestError &&
+                    error.code === "P2002") {
+                    return res
+                        .status(500)
+                        .json({
+                        message: `name is invalid`,
+                    })
+                        .end();
+                }
+                return res
+                    .status(500)
+                    .json({
+                    message: `Internal Server Error`,
+                })
+                    .end();
+            }
+        });
+        this.getByusername = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const _b = yield this.repo.findByUsername(req.params.username), { password, registeredAt } = _b, userInfo = __rest(_b, ["password", "registeredAt"]);
+                return res
+                    .status(200)
+                    .json(Object.assign(Object.assign({}, userInfo), { registeredAt: registeredAt.toISOString() }))
+                    .end();
+            }
+            catch (error) {
+                if (error instanceof library_1.PrismaClientKnownRequestError &&
+                    error.code === "P2825")
+                    return res.status(404).end();
             }
         });
         this.repo = repo;
