@@ -1,0 +1,9 @@
+node_modules/
+.env
+dist/
+.vscode/
+**bcrypt-demo**
+.git/
+.dockerignore
+.gitignore
+Dockerfile
