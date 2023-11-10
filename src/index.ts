@@ -7,6 +7,7 @@ import UserHandler from "./handlers/user";
 import JWTMiddleware from "./middleware/jwt";
 import ContentHandler from "./handlers/content";
 import ContentRepository from "./repositories/content";
+import cors from "cors";
 
 const app = express();
 const PORT = Number(process.env.PORT || 8888);
@@ -20,6 +21,8 @@ const userHandler: IUserHandler = new UserHandler(userRepo);
 const contentHandler: IContentHandler = new ContentHandler(contentRepo);
 
 const jwtMiddleware = new JWTMiddleware();
+
+app.use(cors());
 
 app.use(express.json());
 app.get("/", jwtMiddleware.auth, (req, res) => {
