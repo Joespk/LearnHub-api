@@ -12,3 +12,5 @@ jobs:
         run: pwd
       - name: ไหนมีของอะไรบ้าง
         run: ls
+      - name: Check out
+        uses: actions/checkout@v3
