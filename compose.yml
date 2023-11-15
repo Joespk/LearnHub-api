@@ -7,34 +7,60 @@ secrets:
     file: secrets/node-env.txt
 services:
   server:
-    build:
-      context: .
-      args:
-        SVC_PORT: "8080"
-    secrets:
-      - source: node-env
-        target: /app/.env
+  #     build:
+  #       context: .
+  #       args:
+  #         SVC_PORT: "8080"
+  #     secrets:
+  #       - source: node-env
+  #         target: /app/.env
+  #     ports:
+  #       - 8080:8080
+  #     environment:
+  #       - REDIS_URL=redis://cache:6379
+  #     # `depends_on` tells Docker Compose to start the database before your application.
+  #     depends_on:
+  #       db:
+  #         condition: service_started
+  #   db:
+  #     image: postgres:15
+  #     restart: always
+  #     user: postgres
+  #     volumes:
+  #       # The `db-data` volume persists the database data between container restarts.
+  #       - db-data:/var/lib/postgresql/data
+  #     secrets:
+  #       - db-password
+  #     environment:
+  #       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+  #     expose:
+  #       - 5432
+  #     ports:
+  #       - 5432:5432
+  #   cache:
+  #     image: redis:7.2.3
+  #     expose:
+  #       - 6379
+  # volumes:
+  #   # The `db-data` volume persists the database data between container restarts.
+  #   db-data:
+  api:
+    image: joespk/academy-learnhup-api:github-docker-image-e163b8f
+    environment:
+      - DATABASE_URL=postgresql://postgres:academy@pg-db:5432/mydb?schema=public
+      - PORT=8080
+      - JWT_SECRET=DGR2YRBdSfh1Q6W45UdoOr
+      - REDIS_URL=redis://cache:6379/
     ports:
       - 8080:8080
-    environment:
-      - REDIS_URL=redis://cache:6379
-    # `depends_on` tells Docker Compose to start the database before your application.
     depends_on:
-      db:
-        condition: service_started
-  db:
-    image: postgres:15
-    restart: always
-    user: postgres
-    volumes:
-      # The `db-data` volume persists the database data between container restarts.
-      - db-data:/var/lib/postgresql/data
-    secrets:
-      - db-password
+      - pg-db
+  pg-db:
+    image: postgres:16
     environment:
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-    expose:
-      - 5432
+      - POSTGRES_PASSWORD=academy
+    volumes:
+      - learnhub-db-vol:/var/lib/postgresql/data
     ports:
       - 5432:5432
   cache:
@@ -42,31 +68,5 @@ services:
     expose:
       - 6379
 volumes:
-  # The `db-data` volume persists the database data between container restarts.
-  db-data:
-#   api:
-#     image: joespk/academy-learnhup-api:github-docker-image-e163b8f
-#     environment:
-#       - DATABASE_URL=postgresql://postgres:academy@pg-db:5432/mydb?schema=public
-#       - PORT=8080
-#       - JWT_SECRET=DGR2YRBdSfh1Q6W45UdoOr
-#       - REDIS_URL=redis://cache:6379/
-#     ports:
-#       - 8080:8080
-#     depends_on:
-#       - pg-db
-#   pg-db:
-#     image: postgres:16
-#     environment:
-#       - POSTGRES_PASSWORD=academy
-#     volumes:
-#       - learnhub-db-vol:/var/lib/postgresql/data
-#     ports:
-#       - 5432:5432
-#   cache:
-#     image: redis:7.2.3
-#     expose:
-#       - 6379
-# volumes:
-#   learnhub-db-vol:
-#     name: d0055a64b9f7343e6302adf81a7095498ff5a6175197c546ac74bf61436f2dc3
+  learnhub-db-vol:
+    name: d0055a64b9f7343e6302adf81a7095498ff5a6175197c546ac74bf61436f2dc3
