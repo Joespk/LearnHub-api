@@ -18,8 +18,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - run: |
-          echo 'SHORTENED_SHA=${GITHUB_SHA:0:7}' >> $GITHUB_OUTPUT &&
-          echo 'REF_TAG=$(sed -e 's/\//\./g' <<< $REF_NAME)' >> $GITHUB_OUTPUT
+          echo "SHORTENED_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT &&
+          echo "REF_TAG=$(sed -e 's/\//\./g' <<< $REF_NAME)" >> $GITHUB_OUTPUT
         id: params
         env:
           GITHUB_SHA: ${{ github.sha }}
@@ -31,4 +31,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/academy-learnhup-api:${{ steps.params.output.REF_TAG }}-${{ steps.params.outputs.SHORTENED_SHA }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/academy-learnhup-api:${{ steps.params.outputs.REF_TAG }}-${{ steps.params.outputs.SHORTENED_SHA }}
