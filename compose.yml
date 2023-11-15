@@ -6,7 +6,7 @@ secrets:
   node-env:
     file: secrets/node-env.txt
 services:
-  server:
+  # server:
   #     build:
   #       context: .
   #       args:
@@ -55,6 +55,7 @@ services:
       - 8080:8080
     depends_on:
       - pg-db
+      - cache
   pg-db:
     image: postgres:16
     environment:
