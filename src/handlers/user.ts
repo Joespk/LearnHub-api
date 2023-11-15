@@ -1,21 +1,25 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { RequestHandler } from "express";
-import { sign } from "jsonwebtoken";
+import { JwtPayload, sign, verify } from "jsonwebtoken";
 import { IUserHandler } from ".";
-import { JWT_SECRET } from "../const";
+import { JWT_SECRET, getAuthToken } from "../const";
 import { ICredentialDto, ILoginDto } from "../dto/auth";
 import { ICreateUserDto, IUserDto } from "../dto/user";
 import { AuthStatus } from "../middleware/jwt";
-import { IUserRepository } from "../repositories";
+import { IBlacklistRepository, IUserRepository } from "../repositories";
 import { hashPassword, vetifyPassword } from "../utils/bcrypt";
 import { IErrorDto } from "../dto/Error";
+import { IMessageDto } from "../dto/message";
 
 export default class UserHandler implements IUserHandler {
   private repo: IUserRepository;
+  private blacklistRepo: IBlacklistRepository;
 
-  constructor(repo: IUserRepository) {
+  constructor(repo: IUserRepository, blacklistRepo: IBlacklistRepository) {
     this.repo = repo;
+    this.blacklistRepo = blacklistRepo;
   }
+
   public getPersonalInfo: RequestHandler<
     {},
     IUserDto | IErrorDto,
@@ -41,6 +45,54 @@ export default class UserHandler implements IUserHandler {
       return res
         .status(500)
         .send({
+          message: "Internal Server Error",
+        })
+        .end();
+    }
+  };
+
+  public logout: RequestHandler<
+    {},
+    IMessageDto,
+    undefined,
+    undefined,
+    AuthStatus
+  > = async (req, res) => {
+    try {
+      const authHeader = req.header("Authorization");
+
+      if (!authHeader)
+        return res
+          .status(400)
+          .json({
+            message: "Authorization header is expected",
+          })
+          .end();
+
+      const authToken = getAuthToken(authHeader);
+      const { exp } = verify(authToken, JWT_SECRET) as JwtPayload;
+      if (!exp)
+        return res
+          .status(400)
+          .json({
+            message: "JWT is invalid",
+          })
+          .end();
+
+      await this.blacklistRepo.addToBlacklist(authToken, exp * 1000);
+
+      return res
+        .status(200)
+        .json({
+          message: "You've been logged out",
+        })
+        .end();
+    } catch (error) {
+      console.error(error);
+
+      return res
+        .status(500)
+        .json({
           message: "Internal Server Error",
         })
         .end();

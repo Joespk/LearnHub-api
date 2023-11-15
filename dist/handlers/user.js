@@ -25,7 +25,7 @@ const jsonwebtoken_1 = require("jsonwebtoken");
 const const_1 = require("../const");
 const bcrypt_1 = require("../utils/bcrypt");
 class UserHandler {
-    constructor(repo) {
+    constructor(repo, blacklistRepo) {
         this.getPersonalInfo = (req, res) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const _a = yield this.repo.findById(res.locals.user.id), { registeredAt } = _a, others = __rest(_a, ["registeredAt"]);
@@ -39,6 +39,43 @@ class UserHandler {
                 return res
                     .status(500)
                     .send({
+                    message: "Internal Server Error",
+                })
+                    .end();
+            }
+        });
+        this.logout = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const authHeader = req.header("Authorization");
+                if (!authHeader)
+                    return res
+                        .status(400)
+                        .json({
+                        message: "Authorization header is expected",
+                    })
+                        .end();
+                const authToken = (0, const_1.getAuthToken)(authHeader);
+                const { exp } = (0, jsonwebtoken_1.verify)(authToken, const_1.JWT_SECRET);
+                if (!exp)
+                    return res
+                        .status(400)
+                        .json({
+                        message: "JWT is invalid",
+                    })
+                        .end();
+                yield this.blacklistRepo.addToBlacklist(authToken, exp * 1000);
+                return res
+                    .status(200)
+                    .json({
+                    message: "You've been logged out",
+                })
+                    .end();
+            }
+            catch (error) {
+                console.error(error);
+                return res
+                    .status(500)
+                    .json({
                     message: "Internal Server Error",
                 })
                     .end();
@@ -127,6 +164,7 @@ class UserHandler {
             }
         });
         this.repo = repo;
+        this.blacklistRepo = blacklistRepo;
     }
 }
 exports.default = UserHandler;
