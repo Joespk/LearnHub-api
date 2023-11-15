@@ -1,5 +1,10 @@
 import { PrismaClient, Users } from "@prisma/client";
-import { IUser, IUserRepository, UserCreationError } from ".";
+import {
+  IBlacklistRepository,
+  IUser,
+  IUserRepository,
+  UserCreationError,
+} from ".";
 import { ICreateUserDto, IUserDto } from "../dto/user";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 

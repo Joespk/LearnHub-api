@@ -28,6 +28,11 @@ export interface IUserRepository {
   findById(id: string): Promise<IUser>;
 }
 
+export interface IBlacklistRepository {
+  addToBlacklist(token: string, exp: number): Promise<void>;
+  isAlreadyBlacklisted(token: string): Promise<boolean>;
+}
+
 export interface ICreateContent
   extends Omit<Content, "ownerId" | "id" | "createdAt" | "updatedAt"> {}
 
