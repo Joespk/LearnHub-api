@@ -8,19 +8,38 @@ import JWTMiddleware from "./middleware/jwt";
 import ContentHandler from "./handlers/content";
 import ContentRepository from "./repositories/content";
 import cors from "cors";
+import BlacklistRepository from "./repositories/blacklist";
+import { RedisClientType, createClient } from "redis";
+import { REDIS_URL } from "./const";
 
 const app = express();
 const PORT = Number(process.env.PORT || 8888);
 const clnt = new PrismaClient();
 
-const userRepo: IUserRepository = new UserRepository(clnt);
+const redisClnt: RedisClientType = createClient({
+  url: REDIS_URL,
+});
+
+clnt
+  .$connect()
+  .then(() => redisClnt.connect())
+  .catch((err) => {
+    console.error("Error", err);
+  });
+redisClnt.on("ready", function () {
+  console.log("Connected to Redis server successfully");
+});
+
+const blacklistRepo = new BlacklistRepository(redisClnt);
+
+const userRepo = new UserRepository(clnt);
 const contentRepo: IContentRepository = new ContentRepository(clnt);
 
-const userHandler: IUserHandler = new UserHandler(userRepo);
+const userHandler: IUserHandler = new UserHandler(userRepo, blacklistRepo);
 
 const contentHandler: IContentHandler = new ContentHandler(contentRepo);
 
-const jwtMiddleware = new JWTMiddleware();
+const jwtMiddleware = new JWTMiddleware(blacklistRepo);
 
 app.use(cors());
 
@@ -42,6 +61,7 @@ const authRouter = express.Router();
 app.use("/auth", authRouter);
 
 authRouter.post("/login", userHandler.login);
+authRouter.get("/logout", jwtMiddleware.auth, userHandler.logout);
 authRouter.get("/me", jwtMiddleware.auth, userHandler.getPersonalInfo);
 
 const contentRouter = express.Router();
@@ -55,5 +75,5 @@ contentRouter.patch("/:id", jwtMiddleware.auth, contentHandler.updateById);
 contentRouter.delete("/:id", jwtMiddleware.auth, contentHandler.deleteById);
 
 app.listen(PORT, () => {
-  console.log(`LearnHub API is up at ${PORT}`);
+  console.log(`LearnHub API v+0.0.5 is up at ${PORT}`);
 });
