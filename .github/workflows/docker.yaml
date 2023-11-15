@@ -1,6 +1,10 @@
 name: Docker build image
 
-on: push
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   hello-world:
@@ -31,4 +35,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/academy-learnhup-api:${{ steps.params.outputs.REF_TAG }}-${{ steps.params.outputs.SHORTENED_SHA }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/academy-learnhup-api:${{ steps.params.output.REF_TAG }}-${{ steps.params.outputs.SHORTENED_SHA }}
