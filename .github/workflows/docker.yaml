@@ -1,0 +1,14 @@
+name: Docker build image
+
+on: push
+
+jobs:
+  hello-world:
+    runs-on: ubuntu-latest
+    step:
+      - name: Echo hello world
+        run: echo "Hello, world."
+      - name: กูอยู่ไหน
+        run: pwd
+      - name: ไหนมีของอะไรบ้าง
+        run: ls
